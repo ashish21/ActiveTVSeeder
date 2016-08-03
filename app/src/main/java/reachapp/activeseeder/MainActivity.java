@@ -88,6 +88,8 @@ public class MainActivity extends AppCompatActivity {
         createNewFolder("ActiveTVSeeder/Music");
         createNewFolder("ActiveTVSeeder/Apps");
         createNewFolder("ActiveTVSeeder/Videos");
+        createNewFolder("ActiveTVSeeder/Documents");
+        createNewFolder("ActiveTVSeeder/Images");
 
         new UpdateThumbs().execute("Movies");
         new UpdateThumbs().execute("Videos");
@@ -117,14 +119,9 @@ public class MainActivity extends AppCompatActivity {
         netConfig.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
         netConfig.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
 
-        String wifiSSID = null;
-
         try{
             activity.wifiManager.getClass().getMethod("setWifiApEnabled",
                     WifiConfiguration.class, boolean.class).invoke(activity.wifiManager, netConfig, true);
-            final WifiConfiguration wifiConfig = (WifiConfiguration) activity.wifiManager.getClass()
-                    .getMethod("getWifiApConfiguration").invoke(activity.wifiManager);
-            wifiSSID = wifiConfig.SSID;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -133,8 +130,8 @@ public class MainActivity extends AppCompatActivity {
 //        final int ipAddress = wifiManager.getConnectionInfo().getIpAddress();
 //        final String formatedIpAddress = String.format(Locale.getDefault(), "%d.%d.%d.%d", (ipAddress & 0xff), (ipAddress >> 8 & 0xff),
 //                (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
-        textIpaddr.setText("People can access your content by downloading the ActiveTV app\n\nor\n\nby connecting to the "
-                + wifiSSID + " network and browsing http://192.168.43.1:1993");
+        textIpaddr.setText("People can access your content by downloading the ActiveTV app\n\nor\n\nby connecting to the activeTV-"
+                + ssid + " network and browsing http://192.168.43.1:1993");
         activity.findViewById(R.id.qrCode).setVisibility(View.VISIBLE);
         try {
             final SimpleWebServer server = new SimpleWebServer(null, 1993, new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/ActiveTVSeeder"), true);

@@ -4,9 +4,12 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.net.wifi.WifiConfiguration;
@@ -91,8 +94,9 @@ public class MainActivity extends AppCompatActivity {
         createNewFolder("ActiveTVSeeder/Documents");
         createNewFolder("ActiveTVSeeder/Images");
 
-        new UpdateThumbs().execute("Movies");
-        new UpdateThumbs().execute("Videos");
+        new UpdateThumbs(activity).execute("Apps");
+        new UpdateThumbs(activity).execute("Movies");
+        new UpdateThumbs(activity).execute("Videos");
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.System.canWrite(activity)) {
             Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
@@ -189,6 +193,13 @@ public class MainActivity extends AppCompatActivity {
 
     private static class UpdateThumbs extends AsyncTask<String, Void, Void> {
 
+        private final Context context;
+
+        private UpdateThumbs(Context context) {
+            super();
+            this.context = context;
+        }
+
         @Override
         protected Void doInBackground(String... strings) {
             final File thumbsFolder = createNewFolder("ActiveTVSeeder/"+ strings[0] +"/.thumbnails");
@@ -204,7 +215,13 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     thumb.createNewFile();
                     final FileOutputStream out = new FileOutputStream(thumb);
-                    final Bitmap bitmap = ThumbnailUtils.createVideoThumbnail(movie.getAbsolutePath(), MediaStore.Video.Thumbnails.MINI_KIND);
+
+                    final Bitmap bitmap;
+                    if (strings[0].equals("Apps"))
+                        bitmap = getAPKIcon(movie.getAbsolutePath(), context);
+                    else
+                        bitmap = ThumbnailUtils.createVideoThumbnail(movie.getAbsolutePath(),
+                                MediaStore.Video.Thumbnails.MINI_KIND);
                     if (bitmap == null)
                         continue;
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
@@ -213,6 +230,18 @@ public class MainActivity extends AppCompatActivity {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+            }
+            return null;
+        }
+
+        private static Bitmap getAPKIcon(String filePath, Context context) {
+            final PackageInfo packageInfo = context.getPackageManager().getPackageArchiveInfo(filePath,
+                    PackageManager.GET_ACTIVITIES);
+            if (packageInfo != null) {
+                final ApplicationInfo appInfo = packageInfo.applicationInfo;
+                appInfo.sourceDir = filePath;
+                appInfo.publicSourceDir = filePath;
+                return ((BitmapDrawable) appInfo.loadIcon(context.getPackageManager())).getBitmap();
             }
             return null;
         }
